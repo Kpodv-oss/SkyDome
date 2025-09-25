@@ -6,13 +6,13 @@
   <title>Skydome Experience</title>
   <style>
     html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,Arial}
-    video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover}
+    video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);} /* зеркало для селфи */
     .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
       background:rgba(0,0,0,.7);z-index:10;cursor:pointer}
     .btn{padding:14px 22px;border:1px solid #fff;border-radius:999px;font-size:18px}
     .hidden{display:none}
 
-    /* Подложка для текста внизу */
+    /* Плашка текста снизу, компактная и полупрозрачная */
     .caption{
       position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);
       z-index:5; max-width:90vw; width:min(600px,90vw);
@@ -21,25 +21,34 @@
       text-align:left; font-size:clamp(14px,2.2vw,18px);
       box-shadow:0 4px 12px rgba(0,0,0,.25);
       backdrop-filter: blur(4px);
+      opacity:0; transform-origin:bottom center;
+      animation: fadeUp .8s ease .4s forwards;
     }
     .caption p{margin:.3em 0}
+
     /* Кнопка звука */
     #toggle{
       position:fixed;right:12px;bottom:12px;z-index:20;
       background:rgba(255,255,255,.5);border:none;padding:8px 12px;
       border-radius:8px;cursor:pointer;color:#000;font-size:14px;
+      backdrop-filter: blur(4px);
+    }
+
+    @keyframes fadeUp {
+      from {opacity:0; transform:translate(-50%, 12px);}
+      to   {opacity:1; transform:translate(-50%, 0);}
     }
   </style>
 </head>
 <body>
   <video id="cam" autoplay muted playsinline></video>
 
-  <!-- Кнопка запуска (для звука и камеры) -->
+  <!-- Клик для старта (нужен, чтобы включить звук на мобильных) -->
   <div id="overlay" class="overlay" role="button" aria-label="Start">
     <div class="btn">Tap to start / Нажмите, чтобы начать</div>
   </div>
 
-  <!-- Текст внизу -->
+  <!-- Текст снизу -->
   <div class="caption" id="caption">
     <p>Следующие 5 лет будут решающими.</p>
     <p>Это дело шире чем просто источник дохода.</p>
@@ -61,14 +70,15 @@
     const bg  = document.getElementById('bg');
     const overlay = document.getElementById('overlay');
     const btn = document.getElementById('toggle');
+    let audioCtx;
 
     async function startExperience() {
       overlay.classList.add('hidden');
 
-      // Камера
+      // Камера — ПЕРЕДНЯЯ
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" }, audio: false
+          video: { facingMode: "user" }, audio: false
         });
         cam.srcObject = stream;
       } catch (e) {
@@ -81,8 +91,8 @@
 
     async function enableSound() {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') { await ctx.resume(); }
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') { await audioCtx.resume(); }
         await bg.play();
         btn.textContent = '🔊 Звук: вкл';
       } catch (e) {
@@ -97,6 +107,7 @@
 
     overlay.addEventListener('click', startExperience, { once: true });
 
+    // На случай возврата во вкладку
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && bg.paused) bg.play().catch(()=>{});
     });
