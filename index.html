@@ -5,72 +5,83 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Skydome Experience</title>
   <style>
-    html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,Arial}
-    video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);} /* зеркало для селфи */
-    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-      background:rgba(0,0,0,.7);z-index:10;cursor:pointer}
-    .btn{padding:14px 22px;border:1px solid #fff;border-radius:999px;font-size:18px}
+    html,body{
+      margin:0;
+      height:100%;
+      background:#000;
+      color:#fff;
+      font-family:system-ui,Arial;
+    }
+    video{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      transform:scaleX(-1); /* фронталка как зеркало */
+    }
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,.6);
+      z-index:10;
+      cursor:pointer
+    }
+    .btn{
+      padding:14px 22px;
+      border:1px solid #fff;
+      border-radius:999px;
+      font-size:18px
+    }
     .hidden{display:none}
-
-    /* Плашка текста снизу, компактная и полупрозрачная */
+    /* Белый текст по центру, КАПСОМ */
     .caption{
-      position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);
-      z-index:5; max-width:90vw; width:min(600px,90vw);
-      background:rgba(255,255,255,.4); color:#000;
-      padding:12px 16px; border-radius:12px; line-height:1.35;
-      text-align:left; font-size:clamp(14px,2.2vw,18px);
-      box-shadow:0 4px 12px rgba(0,0,0,.25);
-      backdrop-filter: blur(4px);
-      opacity:0; transform-origin:bottom center;
-      animation: fadeUp .8s ease .4s forwards;
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      z-index:5;
+      max-width:90vw;
+      width:min(900px,90vw);
+      color:#fff;
+      text-align:center;
+      line-height:1.35;
+      font-size:clamp(16px,2.6vw,24px);
+      text-shadow:0 2px 8px rgba(0,0,0,.75);
+      text-transform:uppercase;
     }
-    .caption p{margin:.3em 0}
-
-    /* Кнопка звука */
-    #toggle{
-      position:fixed;right:12px;bottom:12px;z-index:20;
-      background:rgba(255,255,255,.5);border:none;padding:8px 12px;
-      border-radius:8px;cursor:pointer;color:#000;font-size:14px;
-      backdrop-filter: blur(4px);
-    }
-
-    @keyframes fadeUp {
-      from {opacity:0; transform:translate(-50%, 12px);}
-      to   {opacity:1; transform:translate(-50%, 0);}
-    }
+    .caption p{margin:.35em 0}
   </style>
 </head>
 <body>
   <video id="cam" autoplay muted playsinline></video>
 
-  <!-- Клик для старта (нужен, чтобы включить звук на мобильных) -->
+  <!-- Тап для старта -->
   <div id="overlay" class="overlay" role="button" aria-label="Start">
     <div class="btn">Tap to start / Нажмите, чтобы начать</div>
   </div>
 
-  <!-- Текст снизу -->
+  <!-- Текст по центру, капсом -->
   <div class="caption" id="caption">
-    <p>Следующие 5 лет будут решающими.</p>
-    <p>Это дело шире чем просто источник дохода.</p>
-    <p>Это про смысл, силу и лидерство.</p>
-    <p>И в таких решениях я полагаюсь на свой внутренний голос.</p>
-    <p>И только что он напомнил мне о себе.</p>
+    <p>СЛЕДУЮЩИЕ 5 ЛЕТ БУДУТ РЕШАЮЩИМИ.</p>
+    <p>ЭТО ДЕЛО ШИРЕ ЧЕМ ПРОСТО ИСТОЧНИК ДОХОДА.</p>
+    <p>ЭТО ПРО СМЫСЛ, СИЛУ И ЛИДЕРСТВО.</p>
+    <p>И В ТАКИХ РЕШЕНИЯХ Я ПОЛАГАЮСЬ НА СВОЙ ВНУТРЕННИЙ ГОЛОС.</p>
+    <p>И ТОЛЬКО ЧТО ОН НАПОМНИЛ МНЕ О СЕБЕ.</p>
   </div>
 
-  <!-- Музыка -->
+  <!-- Музыка (опционально) -->
   <audio id="bg" preload="auto" loop>
     <source src="music.mp3" type="audio/mpeg" />
   </audio>
 
-  <!-- Кнопка звука -->
-  <button id="toggle">🔊 Звук: выкл</button>
-
   <script>
     const cam = document.getElementById('cam');
-    const bg  = document.getElementById('bg');
     const overlay = document.getElementById('overlay');
-    const btn = document.getElementById('toggle');
-    let audioCtx;
+    const bg  = document.getElementById('bg');
 
     async function startExperience() {
       overlay.classList.add('hidden');
@@ -85,33 +96,19 @@
         alert('Не удалось получить доступ к камере.');
       }
 
-      // Музыка
-      await enableSound();
-    }
-
-    async function enableSound() {
-      try {
-        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') { await audioCtx.resume(); }
-        await bg.play();
-        btn.textContent = '🔊 Звук: вкл';
-      } catch (e) {
-        console.log('Музыка не запустилась', e);
+      // Музыка (если нужна)
+      if (bg) {
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === 'suspended') await audioCtx.resume();
+          await bg.play();
+        } catch(e) {
+          console.log('Музыка не запустилась — можно оставить без неё.');
+        }
       }
     }
 
-    btn.addEventListener('click', async () => {
-      if (bg.paused) { await enableSound(); }
-      else { bg.pause(); btn.textContent = '🔊 Звук: выкл'; }
-    });
-
     overlay.addEventListener('click', startExperience, { once: true });
-
-    // На случай возврата во вкладку
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && bg.paused) bg.play().catch(()=>{});
-    });
   </script>
 </body>
 </html>
-
