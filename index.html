@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera + Music + Text</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+    #videoElement {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    #overlayText {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2em;
+      color: yellow;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+
+<video id="videoElement" autoplay muted playsinline></video>
+<div id="overlayText">Welcome to Skydome!</div>
+<audio id="bgMusic" loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+  // Включаем камеру
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      document.getElementById('videoElement').srcObject = stream;
+    } catch (err) {
+      alert('Camera access denied or unavailable.');
+    }
+  }
+
+  // Включаем музыку
+  function startMusic() {
+    const music = document.getElementById('bgMusic');
+    music.play().catch(err => console.log('Autoplay blocked, user interaction required.'));
+  }
+
+  // Запуск
+  startCamera();
+  // В мобильных браузерах нужно кликнуть по экрану, чтобы звук заработал
+  document.body.addEventListener('click', startMusic, { once: true });
+</script>
+
+</body>
+</html>
