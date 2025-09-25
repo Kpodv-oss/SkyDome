@@ -1,69 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Camera + Music + Text</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Skydome Experience</title>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: black;
-      color: white;
-      text-align: center;
-      font-family: Arial, sans-serif;
+    html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,Arial}
+    video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover}
+    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.7);z-index:10;cursor:pointer}
+    .btn{padding:14px 22px;border:1px solid #fff;border-radius:999px;font-size:18px}
+    .hidden{display:none}
+
+    /* Ваш текст — чёрный, на светлой полупрозрачной плашке */
+    .caption{
+      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+      z-index:5; max-width:90vw; width:min(800px,90vw);
+      background:rgba(255,255,255,.88); color:#000;
+      padding:20px 24px; border-radius:16px; line-height:1.35;
+      text-align:left; font-size:clamp(16px,2.6vw,22px);
+      box-shadow:0 8px 32px rgba(0,0,0,.35);
     }
-    #videoElement {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 1;
-    }
-    #overlayText {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 2em;
-      color: yellow;
-      z-index: 2;
-    }
+    .caption p{margin:.35em 0}
   </style>
 </head>
 <body>
+  <video id="cam" autoplay muted playsinline></video>
 
-<video id="videoElement" autoplay muted playsinline></video>
-<div id="overlayText">Welcome to Skydome!</div>
-<audio id="bgMusic" loop>
-  <source src="music.mp3" type="audio/mpeg">
-</audio>
+  <!-- Кнопка запуска (нужна для звука на мобильных) -->
+  <div id="overlay" class="overlay" role="button" aria-label="Start">
+    <div class="btn">Tap to start / Нажмите, чтобы начать</div>
+  </div>
 
-<script>
-  // Включаем камеру
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      document.getElementById('videoElement').srcObject = stream;
-    } catch (err) {
-      alert('Camera access denied or unavailable.');
+  <!-- ВАШ ТЕКСТ -->
+  <div class="caption" id="caption">
+    <p>Следующие 5 лет будут решающими.</p>
+    <p>Это дело шире чем просто источник дохода.</p>
+    <p>Это про смысл, силу и лидерство.</p>
+    <p>И в таких решениях я полагаюсь на свой внутренний голос.</p>
+    <p>И только что он напомнил мне о себе.</p>
+  </div>
+
+  <!-- Музыка -->
+  <audio id="bg" preload="auto" loop>
+    <source src="music.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script>
+    const cam = document.getElementById('cam');
+    const bg  = document.getElementById('bg');
+    const overlay = document.getElementById('overlay');
+
+    async function startExperience() {
+      overlay.classList.add('hidden');
+
+      // Камера
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" }, audio: false
+        });
+        cam.srcObject = stream;
+      } catch (e) {
+        alert('Не удалось получить доступ к камере.');
+      }
+
+      // Музыка (разрешение по клику)
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') { await ctx.resume(); }
+        await bg.play();
+      } catch (e) {
+        // если не запустилось — дать вторую попытку
+        overlay.classList.remove('hidden');
+      }
     }
-  }
 
-  // Включаем музыку
-  function startMusic() {
-    const music = document.getElementById('bgMusic');
-    music.play().catch(err => console.log('Autoplay blocked, user interaction required.'));
-  }
+    overlay.addEventListener('click', startExperience, { once: true });
 
-  // Запуск
-  startCamera();
-  // В мобильных браузерах нужно кликнуть по экрану, чтобы звук заработал
-  document.body.addEventListener('click', startMusic, { once: true });
-</script>
-
+    // На случай возврата во вкладку
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && bg.paused) bg.play().catch(()=>{});
+    });
+  </script>
 </body>
 </html>
+
