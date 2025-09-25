@@ -12,27 +12,34 @@
     .btn{padding:14px 22px;border:1px solid #fff;border-radius:999px;font-size:18px}
     .hidden{display:none}
 
-    /* Ваш текст — чёрный, на светлой полупрозрачной плашке */
+    /* Подложка для текста внизу */
     .caption{
-      position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-      z-index:5; max-width:90vw; width:min(800px,90vw);
-      background:rgba(255,255,255,.88); color:#000;
-      padding:20px 24px; border-radius:16px; line-height:1.35;
-      text-align:left; font-size:clamp(16px,2.6vw,22px);
-      box-shadow:0 8px 32px rgba(0,0,0,.35);
+      position:fixed;left:50%;bottom:4vh;transform:translateX(-50%);
+      z-index:5; max-width:90vw; width:min(600px,90vw);
+      background:rgba(255,255,255,.4); color:#000;
+      padding:12px 16px; border-radius:12px; line-height:1.35;
+      text-align:left; font-size:clamp(14px,2.2vw,18px);
+      box-shadow:0 4px 12px rgba(0,0,0,.25);
+      backdrop-filter: blur(4px);
     }
-    .caption p{margin:.35em 0}
+    .caption p{margin:.3em 0}
+    /* Кнопка звука */
+    #toggle{
+      position:fixed;right:12px;bottom:12px;z-index:20;
+      background:rgba(255,255,255,.5);border:none;padding:8px 12px;
+      border-radius:8px;cursor:pointer;color:#000;font-size:14px;
+    }
   </style>
 </head>
 <body>
   <video id="cam" autoplay muted playsinline></video>
 
-  <!-- Кнопка запуска (нужна для звука на мобильных) -->
+  <!-- Кнопка запуска (для звука и камеры) -->
   <div id="overlay" class="overlay" role="button" aria-label="Start">
     <div class="btn">Tap to start / Нажмите, чтобы начать</div>
   </div>
 
-  <!-- ВАШ ТЕКСТ -->
+  <!-- Текст внизу -->
   <div class="caption" id="caption">
     <p>Следующие 5 лет будут решающими.</p>
     <p>Это дело шире чем просто источник дохода.</p>
@@ -46,10 +53,14 @@
     <source src="music.mp3" type="audio/mpeg" />
   </audio>
 
+  <!-- Кнопка звука -->
+  <button id="toggle">🔊 Звук: выкл</button>
+
   <script>
     const cam = document.getElementById('cam');
     const bg  = document.getElementById('bg');
     const overlay = document.getElementById('overlay');
+    const btn = document.getElementById('toggle');
 
     async function startExperience() {
       overlay.classList.add('hidden');
@@ -64,20 +75,28 @@
         alert('Не удалось получить доступ к камере.');
       }
 
-      // Музыка (разрешение по клику)
+      // Музыка
+      await enableSound();
+    }
+
+    async function enableSound() {
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         if (ctx.state === 'suspended') { await ctx.resume(); }
         await bg.play();
+        btn.textContent = '🔊 Звук: вкл';
       } catch (e) {
-        // если не запустилось — дать вторую попытку
-        overlay.classList.remove('hidden');
+        console.log('Музыка не запустилась', e);
       }
     }
 
+    btn.addEventListener('click', async () => {
+      if (bg.paused) { await enableSound(); }
+      else { bg.pause(); btn.textContent = '🔊 Звук: выкл'; }
+    });
+
     overlay.addEventListener('click', startExperience, { once: true });
 
-    // На случай возврата во вкладку
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && bg.paused) bg.play().catch(()=>{});
     });
